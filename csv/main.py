@@ -3,6 +3,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 
+# Control flags
+SHOW_CLEANING_OUTPUT = False  # Set to True to see data cleaning steps
+
 base_path = os.path.join(os.path.dirname(__file__), '..')
 
 # Load AI jobs dataset
@@ -18,12 +21,14 @@ df = pd.read_csv(os.path.join(base_path, 'ai_jobs.csv'))
 #===== DATA CLEANING =====
 
 # TODO: Check for missing values - Display count of null values per column
-print("\nMissing values per column:")
-print(df.isnull().sum())
+if SHOW_CLEANING_OUTPUT:
+    print("\nMissing values per column:")
+    print(df.isnull().sum())
 
 # TODO: Handle missing values - Drop or fill with appropriate values (mean/median/mode/forward fill)
 
-print("\nFilling missing values...")
+if SHOW_CLEANING_OUTPUT:
+    print("\nFilling missing values...")
 df['city'] = df['city'].fillna('Unknown')
 
 # Fill experience_level with RANDOM values from available options
@@ -46,16 +51,18 @@ df['salary_max_usd'] = pd.to_numeric(df['salary_max_usd'], errors='coerce')
 df['salary_min_usd'] = df['salary_min_usd'].fillna(df['salary_min_usd'].median())
 df['salary_max_usd'] = df['salary_max_usd'].fillna(df['salary_max_usd'].median())
 
-print("\nMissing values after filling:")
-print(df.isnull().sum())
-
-count = len(df)
-print(f"\nTotal records after filling missing values: {count}")
+if SHOW_CLEANING_OUTPUT:
+    print("\nMissing values after filling:")
+    print(df.isnull().sum())
+    count = len(df)
+    print(f"\nTotal records after filling missing values: {count}")
 
 # TODO: Remove duplicate rows - Check and remove any duplicate entries
-print("\nRemoving duplicates...")
+if SHOW_CLEANING_OUTPUT:
+    print("\nRemoving duplicates...")
 df = df.drop_duplicates()
-print("Total records after removing duplicates:", len(df))
+if SHOW_CLEANING_OUTPUT:
+    print("Total records after removing duplicates:", len(df))
 
 # TODO: Standardize text columns if issues found above - Convert to lowercase, strip whitespace, fix inconsistencies
 # Uncomment below if standardization is needed:
@@ -86,9 +93,10 @@ df['country'] = df['country'].str.strip().str.title()
 
 # TODO: Convert data types - Ensure salary is numeric, dates are datetime, categories are proper type
 
-print("\nConverting data types...")
-print("Before conversion:")
-print(df.dtypes)
+if SHOW_CLEANING_OUTPUT:
+    print("\nConverting data types...")
+    print("Before conversion:")
+    print(df.dtypes)
 
 df['posted_year'] = pd.to_numeric(df['posted_year'], errors='coerce')
 df['country'] = df['country'].astype('category')
@@ -97,8 +105,9 @@ df['company_size'] = df['company_size'].astype('category')
 
 # df['salary_min_usd'] = pd.to_numeric(df['salary_min_usd'], errors='coerce')
 # df['salary_max_usd'] = pd.to_numeric(df['salary_max_usd'], errors='coerce')
-print("\nAfter conversion:")
-print(df.dtypes)
+if SHOW_CLEANING_OUTPUT:
+    print("\nAfter conversion:")
+    print(df.dtypes)
 
 # TODO: Handle outliers in salary - Detect using IQR or z-scores, remove or cap extreme values
 Q1 = df['salary_min_usd'].quantile(0.25)  # 25th percentile
@@ -109,12 +118,14 @@ lower_bound = Q1 - 1.5 * IQR
 upper_bound = Q3 + 1.5 * IQR
 
 outliers = df[(df['salary_min_usd'] < lower_bound) | (df['salary_min_usd'] > upper_bound)]
-print(f"\nFound {len(outliers)} outliers")
-print(f"Lower bound: ${lower_bound:.2f}")
-print(f"Upper bound: ${upper_bound:.2f}")
+if SHOW_CLEANING_OUTPUT:
+    print(f"\nFound {len(outliers)} outliers")
+    print(f"Lower bound: ${lower_bound:.2f}")
+    print(f"Upper bound: ${upper_bound:.2f}")
 # TODO: Fix inconsistent job titles - Standardize similar job titles (e.g., "ML Engineer" = "Machine Learning Engineer")
-print("\nBefore standardizing job titles:")
-print(df['job_title'].value_counts().head(1000))
+if SHOW_CLEANING_OUTPUT:
+    print("\nBefore standardizing job titles:")
+    print(df['job_title'].value_counts().head(1000))
 title_mapping = {
     'ML ENGINEER': 'MACHINE LEARNING ENGINEER',
     'ML ENG': 'MACHINE LEARNING ENGINEER',
@@ -122,8 +133,16 @@ title_mapping = {
 }
 
 df['job_title'] = df['job_title'].replace(title_mapping)
-print("\nAfter standardizing job titles:")
-print(df['job_title'].value_counts().head(1000))
+if SHOW_CLEANING_OUTPUT:
+    print("\nAfter standardizing job titles:")
+    print(df['job_title'].value_counts().head(1000))
+
+# Save cleaned data
+cleaned_file_path = os.path.join(base_path, 'ai_jobs_cleaned.csv')
+df.to_csv(cleaned_file_path, index=False)
+print(f"\n[SUCCESS] Data cleaning complete! Cleaned data saved to: ai_jobs_cleaned.csv")
+print(f"Total records: {len(df)}")
+
 #===== DATA ANALYSIS =====
 
 # TODO: Descriptive statistics - Get mean, median, std, min, max for numerical columns (salary, experience, etc.)
